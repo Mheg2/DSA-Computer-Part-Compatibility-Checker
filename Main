@@ -1,0 +1,142 @@
+package microbuild;
+
+import java.util.Scanner;
+
+public class Main {
+
+    public static void main(String[] args) {
+        InventoryManager inventory = seedInventory();
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Welcome to MicroBuild - PC Build Configurator & Compatibility Verifier");
+
+        BuildConfiguration build = new BuildConfiguration("Custom Build #1");
+
+        boolean running = true;
+        while (running) {
+            printMenu();
+            String choice = scanner.nextLine().trim();
+
+            switch (choice) {
+                case "1":
+                    listInventory(inventory);
+                    break;
+                case "2":
+                    selectComponent(scanner, inventory, build, "CPU");
+                    break;
+                case "3":
+                    selectComponent(scanner, inventory, build, "Motherboard");
+                    break;
+                case "4":
+                    selectComponent(scanner, inventory, build, "RAM");
+                    break;
+                case "5":
+                    selectComponent(scanner, inventory, build, "GPU");
+                    break;
+                case "6":
+                    selectComponent(scanner, inventory, build, "PSU");
+                    break;
+                case "7":
+                    selectComponent(scanner, inventory, build, "Storage");
+                    break;
+                case "8":
+                    selectComponent(scanner, inventory, build, "Case");
+                    break;
+                case "9":
+                    System.out.println(new QuoteGenerator().generateQuote(build));
+                    break;
+                case "0":
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Invalid option.");
+            }
+        }
+
+        System.out.println("Goodbye!");
+        scanner.close();
+    }
+
+    private static void printMenu() {
+        System.out.println("\n--- MENU ---");
+        System.out.println("1. View inventory");
+        System.out.println("2. Select CPU");
+        System.out.println("3. Select Motherboard");
+        System.out.println("4. Select RAM");
+        System.out.println("5. Select GPU");
+        System.out.println("6. Select PSU");
+        System.out.println("7. Add Storage");
+        System.out.println("8. Select Case");
+        System.out.println("9. Generate Quote");
+        System.out.println("0. Exit");
+        System.out.print("Choose an option: ");
+    }
+
+    private static void listInventory(InventoryManager inventory) {
+        System.out.println("\n--- INVENTORY ---");
+        for (Component c : inventory.getCatalog().values()) {
+            System.out.printf("%-6s %-40s stock: %d%n",
+                    c.getId(), c.toString(), inventory.getStock(c.getId()));
+        }
+    }
+
+    private static void selectComponent(Scanner scanner, InventoryManager inventory,
+                                        BuildConfiguration build, String category) {
+        System.out.println("\nAvailable " + category + " options:");
+        for (Component c : inventory.getCatalog().values()) {
+            if (c.getCategory().equalsIgnoreCase(category)) {
+                System.out.printf("  %-6s %s (stock: %d)%n", c.getId(), c, inventory.getStock(c.getId()));
+            }
+        }
+        System.out.print("Enter component ID to select: ");
+        String id = scanner.nextLine().trim();
+        Component selected = inventory.getComponent(id);
+
+        if (selected == null || !selected.getCategory().equalsIgnoreCase(category)) {
+            System.out.println("Invalid ID for category " + category + ".");
+            return;
+        }
+        if (!inventory.isInStock(id)) {
+            System.out.println("Sorry, " + selected.getName() + " is out of stock.");
+            return;
+        }
+
+        switch (category) {
+            case "CPU": build.setCpu((CPU) selected); break;
+            case "Motherboard": build.setMotherboard((Motherboard) selected); break;
+            case "RAM": build.setRam((RAM) selected); break;
+            case "GPU": build.setGpu((GPU) selected); break;
+            case "PSU": build.setPsu((PSU) selected); break;
+            case "Storage": build.addStorage((Storage) selected); break;
+            case "Case": build.setPcCase((CaseComponent) selected); break;
+        }
+        System.out.println("Selected: " + selected.getName());
+    }
+
+    private static InventoryManager seedInventory() {
+        InventoryManager inv = new InventoryManager();
+
+        inv.addComponent(new CPU("CPU1", "AMD Ryzen 5 7600", 12500, "AM5", 6, 65), 10);
+        inv.addComponent(new CPU("CPU2", "Intel Core i5-13400F", 10500, "LGA1700", 10, 65), 8);
+
+        inv.addComponent(new Motherboard("MB1", "MSI B650M PRO", 7500, "AM5", "DDR5", 128, "mATX"), 5);
+        inv.addComponent(new Motherboard("MB2", "ASUS Prime B760M", 6800, "LGA1700", "DDR4", 128, "mATX"), 5);
+
+        inv.addComponent(new RAM("RAM1", "Kingston Fury 16GB DDR5 6000", 3200, "DDR5", 16, 6000), 15);
+        inv.addComponent(new RAM("RAM2", "Corsair Vengeance 16GB DDR4 3200", 2400, "DDR4", 16, 3200), 15);
+
+        inv.addComponent(new GPU("GPU1", "NVIDIA RTX 4060", 22000, 200, 285, 550), 6);
+        inv.addComponent(new GPU("GPU2", "AMD RX 7600", 19500, 165, 280, 550), 6);
+
+        inv.addComponent(new PSU("PSU1", "Cooler Master 550W Bronze", 3500, 550, "ATX"), 10);
+        inv.addComponent(new PSU("PSU2", "Seasonic 650W Gold", 5200, 650, "ATX"), 10);
+
+        inv.addComponent(new Storage("SSD1", "Samsung 980 1TB NVMe", 4200, "SSD", 1000, "NVMe"), 20);
+        inv.addComponent(new Storage("HDD1", "Seagate Barracuda 2TB", 2600, "HDD", 2000, "SATA"), 12);
+
+        inv.addComponent(new CaseComponent("CASE1", "NZXT H510", 4800, "ATX,mATX,ITX", 300), 7);
+        inv.addComponent(new CaseComponent("CASE2", "Cooler Master MasterBox Q300L", 2900, "mATX,ITX", 360), 7);
+
+        return inv;
+    }
+}
